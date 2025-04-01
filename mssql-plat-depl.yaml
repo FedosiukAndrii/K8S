@@ -12,28 +12,40 @@ spec:
       labels:
         app: mssql
     spec:
+      securityContext:
+        fsGroup: 10001  # <- група для volume
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 10001:10001 /var/opt/mssql"]
+          volumeMounts:
+            - name: mssqldb
+              mountPath: /var/opt/mssql
       containers:
         - name: mssql
-          image: mcr.microsoft.com/mssql/server:2017-latest
+          image: mcr.microsoft.com/mssql/server:2022-latest
           ports:
             - containerPort: 1433
           env:
-          - name: MSSQL_PID
-            value: "Express"
-          - name: ACCEPT_EULA
-            value: "Y"
-          - name: SA_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: mssql
-                key: SA_PASSWORD
+            - name: MSSQL_PID
+              value: "Express"
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mssql
+                  key: SA_PASSWORD
           volumeMounts:
-          - mountPath: /var/opt/mssql/data
-            name: mssqldb
+            - mountPath: /var/opt/mssql/data
+              name: mssqldb
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 0
       volumes:
-      - name: mssqldb
-        persistentVolumeClaim: 
-          claimName: mssql-claim
+        - name: mssqldb
+          persistentVolumeClaim:
+            claimName: mssql-pvc
 ---
 apiVersion: v1
 kind: Service

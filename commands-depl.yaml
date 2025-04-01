@@ -15,6 +15,7 @@ spec:
       containers:
         - name: commandsservice
           image: andriifedosiuk/commandsservice:latest
+          imagePullPolicy: Always
 ---
 apiVersion: v1
 kind: Service
